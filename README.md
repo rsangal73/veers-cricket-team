@@ -1,48 +1,46 @@
-# Veers Cricket Team - GitHub + Cloudflare Auto Deploy
+# Veers Cricket Team
 
-This repo auto-deploys to Cloudflare Pages on every push to main.
+Website for the Veers Cricket Team — a hard tennis ball cricket team of 25 veteran
+players (ages 40-60) based in West Windsor, NJ, founded in 2020.
 
-## Setup Steps (One time - 3 mins)
+Live at **[veerscricket.com](https://veerscricket.com)**.
 
-### 1. Create GitHub Repo
-- Go to github.com/new
-- Name: `veers-cricket-team`
-- Public or Private
-- Create repo
+## Site sections
 
-### 2. Push this code
-```bash
-git init
-git add .
-git commit -m "Initial deploy - Veers Cricket Team - transparent logo, navy black jersey"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/veers-cricket-team.git
-git push -u origin main
-```
+- **About** — team story and quick stats
+- **Squad** — player roster
+- **Ground** — home ground details (Conover Field, West Windsor)
+- **Sponsors** — proud sponsor: [Nearsite](https://www.nearsite.com/)
+- **Contact** — contact info and practice/matchday schedule
 
-### 3. Get Cloudflare Credentials
-- Cloudflare Dashboard -> My Profile -> API Tokens -> Create Token -> Edit Cloudflare Workers (or use custom with Pages:Edit, Account:Read)
-- Copy Token
-- Dashboard -> Right sidebar -> Account ID -> Copy
+## Stack
 
-### 4. Add GitHub Secrets
-Go to GitHub Repo -> Settings -> Secrets and variables -> Actions -> New repository secret
-Add:
-- `CLOUDFLARE_API_TOKEN` = your token
-- `CLOUDFLARE_ACCOUNT_ID` = your account ID
+Single-file static site (`index.html`) with no build step — it's a pre-bundled
+React app plus a small vanilla-JS snippet (appended before `</body>`) that injects
+the Sponsors section and its nav links after the app mounts.
 
-### 5. Create Cloudflare Pages Project (first time)
-- Cloudflare Dashboard -> Pages -> Create Project -> Connect to Git -> Select your repo
-- Build settings: Framework preset = None, Build command = empty, Output directory = /
-- Deploy - then future deploys will be handled by GitHub Action
+## Deployment
 
-### 6. Done!
-Now every `git push` auto-deploys.
+Hosted on **Cloudflare Workers (static assets)**, connected directly to this
+GitHub repo via Cloudflare's Git integration. Every push to `main` triggers an
+automatic build and deploy — no GitHub Actions or secrets involved.
+
+- `wrangler.toml` — declares the static assets directory and SPA fallback
+- `.assetsignore` — excludes `.git`, config files, and docs from the deployed
+  asset bundle
+- `_headers` — cache-control rules for the deployed assets
+- Custom domain `veerscricket.com` is bound to the Worker in the Cloudflare
+  dashboard
 
 ## Local dev
-Just open index.html - it's a single file static site, no build needed.
+
+Just open `index.html` directly in a browser — it's a single file, no build
+needed.
 
 ## Files
-- index.html - main site
-- logo.png / veers_v_transparent.png - transparent logo
-- .github/workflows/deploy.yml - auto deploy
+
+- `index.html` — the site
+- `logo.png`, `veers_v_transparent.png` — team logo assets
+- `wrangler.toml` — Cloudflare Workers config
+- `.assetsignore` — asset upload exclusions
+- `_headers` — Cloudflare static-hosting cache rules
