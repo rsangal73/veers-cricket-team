@@ -1,0 +1,7 @@
+{
+  "name": "veers-cricket-team",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler pages deploy . --project-name=veers-cricket-team"
+  }
+}
