@@ -73,6 +73,8 @@ Error generating stack: `+l.message+`
 
   <script>
   (function () {
+    var MATCHES_SHEET_ID = "YOUR_GOOGLE_SHEET_ID";
+
     function findToggleButton() {
       return Array.prototype.find.call(document.querySelectorAll("button"), function (b) {
         return (
@@ -107,27 +109,165 @@ Error generating stack: `+l.message+`
       footer.parentNode.insertBefore(section, footer);
     }
 
+    function gvizDateToDate(raw) {
+      if (typeof raw !== "string") return null;
+      var m = raw.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+      if (!m) return null;
+      return new Date(parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10));
+    }
+
+    function findColumnIndex(cols, names) {
+      for (var i = 0; i < cols.length; i++) {
+        var label = (cols[i].label || "").trim().toLowerCase();
+        for (var j = 0; j < names.length; j++) {
+          if (label === names[j]) return i;
+        }
+      }
+      return -1;
+    }
+
+    function renderMatchesEmpty(container) {
+      container.innerHTML =
+        '<div class="rounded-[26px] border border-white/[0.08] bg-gradient-to-b from-[#121C2F]/90 to-[#0A111E]/90 p-8 text-center text-[14px] text-white/50">' +
+        "Match results coming soon \u2014 check back after our next game!" +
+        "</div>";
+    }
+
+    function renderMatches(container, matches) {
+      var rows = matches
+        .map(function (m) {
+          return (
+            '<div class="rounded-[18px] border border-white/[0.06] bg-white/[0.03] px-5 py-4 flex flex-wrap items-center justify-between gap-3">' +
+            '<div class="flex items-center gap-4 flex-wrap">' +
+            '<div class="text-[12px] font-semibold tracking-wide text-white/40 w-[92px]">' + m.dateLabel + "</div>" +
+            '<div class="text-[14px] font-semibold">' + m.opponent + "</div>" +
+            (m.result
+              ? '<span class="rounded-full px-3 py-1 text-[11px] font-bold tracking-wide ' + m.resultClass + '">' + m.result + "</span>"
+              : "") +
+            "</div>" +
+            (m.link
+              ? '<a href="' + m.link + '" target="_blank" rel="noopener noreferrer" class="h-[34px] rounded-full border border-white/15 bg-white/[0.04] px-4 text-[12px] font-semibold tracking-wide inline-flex items-center text-white/80 hover:bg-white/[0.08] transition">SCORECARD \u2192</a>'
+              : "") +
+            "</div>"
+          );
+        })
+        .join("");
+
+      container.innerHTML =
+        '<div class="rounded-[26px] border border-white/[0.08] bg-gradient-to-b from-[#121C2F]/90 to-[#0A111E]/90 p-4 md:p-6 space-y-3">' + rows + "</div>";
+    }
+
+    function classifyResult(result) {
+      var r = (result || "").toLowerCase();
+      if (r.indexOf("win") !== -1 || r.indexOf("won") !== -1) return "bg-emerald-500/15 text-emerald-400";
+      if (r.indexOf("loss") !== -1 || r.indexOf("lost") !== -1) return "bg-rose-500/15 text-rose-400";
+      if (r) return "bg-amber-500/15 text-amber-400";
+      return "";
+    }
+
+    function addMatchesSection() {
+      var footer = document.getElementById("contact");
+      if (!footer || document.getElementById("matches")) return;
+
+      var section = document.createElement("section");
+      section.id = "matches";
+      section.className = "relative z-10 mx-auto max-w-[1280px] px-5 md:px-8 pb-12 md:pb-20";
+      section.innerHTML =
+        '<div class="inline-flex items-center gap-2 text-[11px] tracking-[0.18em] text-white/40 font-semibold">' +
+        '<span class="h-px w-6 bg-white/20"></span> MATCH RESULTS</div>' +
+        '<h2 class="mt-3 text-[22px] md:text-[28px] font-bold tracking-tight leading-tight">Recent Matches</h2>' +
+        '<div id="matches-list" class="mt-6"></div>';
+
+      footer.parentNode.insertBefore(section, footer);
+
+      var listEl = document.getElementById("matches-list");
+
+      if (!MATCHES_SHEET_ID || MATCHES_SHEET_ID.indexOf("YOUR_") === 0) {
+        renderMatchesEmpty(listEl);
+        return;
+      }
+
+      var url = "https://docs.google.com/spreadsheets/d/" + MATCHES_SHEET_ID + "/gviz/tq?tqx=out:json";
+
+      fetch(url)
+        .then(function (r) { return r.text(); })
+        .then(function (text) {
+          var jsonText = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+          var data = JSON.parse(jsonText);
+          var cols = data.table.cols;
+          var rows = data.table.rows;
+
+          var dateIdx = findColumnIndex(cols, ["date"]);
+          var opponentIdx = findColumnIndex(cols, ["opponent", "opponent team"]);
+          var resultIdx = findColumnIndex(cols, ["result"]);
+          var linkIdx = findColumnIndex(cols, ["scorecard link", "scorecard", "link"]);
+
+          var matches = rows
+            .map(function (row) {
+              var c = row.c;
+              var dateCell = dateIdx >= 0 && c[dateIdx] ? c[dateIdx] : null;
+              var dateObj = dateCell ? gvizDateToDate(dateCell.v) : null;
+              var dateLabel = dateObj
+                ? dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : dateCell && dateCell.f
+                ? dateCell.f
+                : "";
+              return {
+                dateObj: dateObj,
+                dateLabel: dateLabel,
+                opponent: opponentIdx >= 0 && c[opponentIdx] && c[opponentIdx].v ? c[opponentIdx].v : "Match",
+                result: resultIdx >= 0 && c[resultIdx] && c[resultIdx].v ? c[resultIdx].v : "",
+                resultClass: resultIdx >= 0 && c[resultIdx] ? classifyResult(c[resultIdx].v) : "",
+                link: linkIdx >= 0 && c[linkIdx] && c[linkIdx].v ? c[linkIdx].v : "",
+              };
+            })
+            .filter(function (m) { return m.opponent || m.link; })
+            .sort(function (a, b) {
+              if (a.dateObj && b.dateObj) return b.dateObj - a.dateObj;
+              return 0;
+            });
+
+          if (!matches.length) {
+            renderMatchesEmpty(listEl);
+          } else {
+            renderMatches(listEl, matches);
+          }
+        })
+        .catch(function () {
+          renderMatchesEmpty(listEl);
+        });
+    }
+
+    var EXTRA_NAV_ITEMS = [
+      { label: "Matches", href: "#matches" },
+      { label: "Sponsors", href: "#sponsors" },
+      { label: "Gallery", href: "/gallery/" },
+    ];
+
     function syncNavLinks() {
       document.querySelectorAll('a[href="#contact"]').forEach(function (a) {
-        if (!a.parentNode || a.parentNode.querySelector('a[href="#sponsors"]')) return;
-        var link = document.createElement("a");
-        link.href = "#sponsors";
-        link.textContent = "Sponsors";
-        link.className = a.className;
-        var isMobile = a.className.indexOf("rounded-[12px]") !== -1;
-        if (isMobile) {
-          link.addEventListener("click", function () {
-            setTimeout(function () {
-              var toggle = findToggleButton();
-              if (toggle) toggle.click();
-            }, 0);
-          });
-        }
-        a.parentNode.insertBefore(link, a);
+        EXTRA_NAV_ITEMS.forEach(function (item) {
+          if (!a.parentNode || a.parentNode.querySelector('a[href="' + item.href + '"]')) return;
+          var link = document.createElement("a");
+          link.href = item.href;
+          link.textContent = item.label;
+          link.className = a.className;
+          var isMobile = a.className.indexOf("rounded-[12px]") !== -1;
+          if (isMobile && item.href.charAt(0) === "#") {
+            link.addEventListener("click", function () {
+              setTimeout(function () {
+                var toggle = findToggleButton();
+                if (toggle) toggle.click();
+              }, 0);
+            });
+          }
+          a.parentNode.insertBefore(link, a);
+        });
       });
     }
 
     function init() {
+      addMatchesSection();
       addSponsorSection();
       syncNavLinks();
       var toggle = findToggleButton();

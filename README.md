@@ -10,14 +10,39 @@ Live at **[veerscricket.com](https://veerscricket.com)**.
 - **About** — team story and quick stats
 - **Squad** — player roster
 - **Ground** — home ground details (Conover Field, West Windsor)
+- **Matches** — recent match results with CricClubs scorecard links (see below)
 - **Sponsors** — proud sponsor: [Nearsite](https://www.nearsite.com/)
+- **Gallery** — [separate page](https://veerscricket.com/gallery/) with match/party photos
 - **Contact** — contact info and practice/matchday schedule
 
 ## Stack
 
 Single-file static site (`index.html`) with no build step — it's a pre-bundled
 React app plus a small vanilla-JS snippet (appended before `</body>`) that injects
-the Sponsors section and its nav links after the app mounts.
+the Matches and Sponsors sections and all extra nav links after the app mounts.
+`gallery/index.html` is a separate, lightweight hand-written page (no React
+bundle) for the photo gallery.
+
+## Updating match results (no code needed)
+
+Match links live in a Google Sheet, not in the code. To publish a new result:
+
+1. Open the team's "Veers Matches" Google Sheet.
+2. Add a row with columns: `Date`, `Opponent`, `Result`, `Scorecard Link`
+   (paste the CricClubs scorecard URL here).
+3. That's it — the site fetches the sheet live, so the match shows up on
+   veerscricket.com within seconds, sorted newest-first. No GitHub, no deploy.
+
+One-time setup (already done if `MATCHES_SHEET_ID` in `index.html` is filled
+in): create the sheet with those exact column headers, share it as
+"Anyone with the link — Viewer", and put its ID (the long string in the
+sheet's URL between `/d/` and `/edit`) into the `MATCHES_SHEET_ID` constant
+near the top of the appended `<script>` in `index.html`.
+
+## Adding gallery photos (no code needed)
+
+See [`gallery/photos/README.md`](gallery/photos/README.md) — upload photos via
+GitHub's web UI, add a matching entry to `gallery/manifest.json`, done.
 
 ## Deployment
 
@@ -40,7 +65,11 @@ needed.
 ## Files
 
 - `index.html` — the site
+- `gallery/index.html` — the photo gallery page
+- `gallery/manifest.json` — list of gallery photos (edit this to add photos)
+- `gallery/photos/` — the actual photo files
 - `logo.png`, `veers_v_transparent.png` — team logo assets
 - `wrangler.toml` — Cloudflare Workers config
 - `.assetsignore` — asset upload exclusions
 - `_headers` — Cloudflare static-hosting cache rules
+- `robots.txt`, `sitemap.xml` — search engine crawling config
