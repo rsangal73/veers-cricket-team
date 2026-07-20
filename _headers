@@ -1,4 +1,12 @@
 /*
   Cache-Control: public, max-age=3600
+/
+  Cache-Control: public, max-age=0, must-revalidate
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
+/gallery/
+  Cache-Control: public, max-age=0, must-revalidate
+/gallery/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/gallery/manifest.json
+  Cache-Control: public, max-age=60, must-revalidate
