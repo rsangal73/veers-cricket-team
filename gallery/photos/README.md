@@ -1,24 +1,32 @@
 # How to add photos
 
-1. On GitHub, open this `gallery/photos/` folder → **Add file → Upload files** →
-   drag in your match/party photos → commit directly to `main`.
-2. Open `gallery/manifest.json` (one level up) → **Edit** → add one entry per
-   photo you just uploaded:
+Photos are organized in one subfolder per event/category, e.g.
+`gallery/photos/TeamEvent_July9_2026/`.
+
+1. On GitHub, open this `gallery/photos/` folder. For a new event, create a
+   new subfolder by uploading straight into a new path (see step 2). For an
+   existing event, open its subfolder.
+2. **Add file → Upload files** → drag in your photos for that event (or drag
+   the whole event folder from your computer — GitHub preserves the folder
+   structure) → commit directly to `main`.
+3. Open `gallery/manifest.json` (two levels up) → **Edit** → add one entry
+   per photo you just uploaded:
 
    ```json
    {
-     "file": "/gallery/photos/2026-07-18-vs-somewhere-1.jpg",
-     "caption": "Veers vs Somewhere CC — Jul 18, 2026",
-     "album": "vs Somewhere CC — Jul 18, 2026"
+     "file": "/gallery/photos/TeamEvent_July9_2026/TeamEvent_July9_2026_1.jpg",
+     "caption": "Optional caption shown in the lightbox",
+     "album": "Team Event — July 9, 2026"
    }
    ```
 
-   - `file` — path to the photo you uploaded (must start with `/gallery/photos/`)
+   - `file` — path to the photo you uploaded, including its subfolder
    - `caption` — shown under the photo in the lightbox (optional)
-   - `album` — groups photos under a heading on the gallery page (optional —
-     omit it and photos just show in one list)
+   - `album` — groups photos under a heading on the gallery page; use the
+     same album name for every photo from the same event (optional — omit
+     it and photos just show in one list)
 
-3. Commit. The site auto-deploys and the new photos show up at
+4. Commit. The site auto-deploys and the new photos show up at
    [veerscricket.com/gallery](https://veerscricket.com/gallery/) within a
    minute or two.
 
