@@ -266,7 +266,16 @@ Error generating stack: `+l.message+`
       });
     }
 
+    function fixStickyHeaderBug() {
+      var wrapper = document.querySelector(".overflow-x-hidden");
+      if (wrapper) {
+        wrapper.classList.remove("overflow-x-hidden");
+        wrapper.style.overflowX = "clip";
+      }
+    }
+
     function init() {
+      fixStickyHeaderBug();
       addMatchesSection();
       addSponsorSection();
       syncNavLinks();
