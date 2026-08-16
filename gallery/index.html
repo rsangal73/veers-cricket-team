@@ -315,7 +315,7 @@
           var fig = document.createElement("figure");
           var img = document.createElement("img");
           img.src = item.thumb || item.file;
-          img.alt = item.caption || item.alt;
+          img.alt = item.caption || "";
           img.loading = "lazy";
           fig.appendChild(img);
           fig.addEventListener("click", function () {
